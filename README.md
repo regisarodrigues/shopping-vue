@@ -33,3 +33,10 @@ pnpm build
 ```sh
 pnpm lint
 ```
+
+### Curso [Udemy](https://www.udemy.com/course/vuejs-la-guia-completa-composition-pinia-mevn-creando-proyectos-reales/)
+
+```
+Vue.js 3 - La Guía Completa - Composition Pinia MEVN 10 Apps
+
+```
