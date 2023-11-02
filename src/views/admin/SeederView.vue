@@ -1,0 +1,98 @@
+<script setup>
+import { addDoc, collection } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
+import { useFirebaseStorage, useFirestore } from 'vuefire';
+import { products } from '../../data/products';
+
+const storage = useFirebaseStorage();
+
+const db = useFirestore();
+
+async function seedDB() {
+  const productsCollection = collection(db, 'products');
+
+  for (let i = 1; i < products.length; i++) {
+    const url = await getDownloadURL(ref(storage, `products/producto${i}.jpg`));
+
+    addDoc(productsCollection, {
+      name: products[i - 1].name,
+      price: products[i - 1].price,
+      availability: products[i - 1].availability,
+      category: products[i - 1].category,
+      image: url
+    })
+      .then(() => {
+        console.log('Produto Adicionando...');
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+    if (i === products.length - 1) {
+      alert('Subiram os Produtos');
+    }
+  }
+}
+
+const handleSubmit = (data) => {
+  const urls = [];
+  data.images.forEach((fileItem) => {
+    const storageRef = ref(storage, '/products');
+
+    // Upload the file to Firebase Storage
+    const uploadTask = uploadBytesResumable(ref(storageRef, fileItem.name), fileItem.file);
+
+    // Monitor the upload progress and retrieve the download URL
+    uploadTask.on(
+      'state_changed',
+      // eslint-disable-next-line no-unused-vars
+      (snapshot) => {
+        // Upload progress can be monitored here
+      },
+      (error) => {
+        console.log(error);
+      },
+      () => {
+        // Upload is complete, get the download URL
+        getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+          urls.push(downloadURL);
+          if (urls.length === data.images.length) {
+            alert('Subiram as imagens');
+          }
+        });
+      }
+    );
+  });
+};
+</script>
+
+<template>
+  <div class="mt-10">
+    <Link to="products"> Volver </Link>
+
+    <h1 class="text-4xl my-10 font-extrabold">Seeder</h1>
+
+    <div class="flex justify-center bg-white shadow">
+      <div class="mx-auto mt-10 p-10 w-full 2xl:w-2/4">
+        <FormKit
+          type="form"
+          submit-label="Adicionar Imagens"
+          incomplete-message="Não pode enviar, revisa as mensagens"
+          @submit="handleSubmit"
+        >
+          <FormKit type="file" multiple="true" name="images" />
+        </FormKit>
+
+        <div class="mt-16">
+          <FormKit
+            type="form"
+            submit-label="Adicionar Produtos"
+            incomplete-message="Não pode enviar, revisa as mensagens"
+            @submit="seedDB"
+          >
+          </FormKit>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
